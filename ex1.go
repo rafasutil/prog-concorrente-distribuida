@@ -37,7 +37,7 @@ func pessoa(nome string, cond *sync.Cond) {
 		}()
 		cond.L.Unlock()
 		// Comer
-		time.Sleep(time.Second * 15)
+		time.Sleep(time.Second * 5)
 	}
 }
 
@@ -50,7 +50,7 @@ func cozinheiro(cond *sync.Cond) {
 		func() {
 			if M == 0 {
 				fmt.Printf("Cozinheiro está enchendo...\n")
-				time.Sleep(time.Second * 5)
+				time.Sleep(time.Second * 3)
 				M = 10
 				cond.Broadcast()
 			}
