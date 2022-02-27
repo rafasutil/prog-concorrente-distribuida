@@ -30,14 +30,14 @@ func NewSemaphore(N int32) *Semaphore {
 
 func (s *Semaphore) P(i int) {
 	s.c.L.Lock()
-	if s.n == 0 {
-		fmt.Printf("Cliente %d deve esperar os 5 levantarem\n", i)
-		s.must_wait = true
-	}
 	for s.n <= 0 || s.must_wait {
+		fmt.Printf("Cliente %d deve esperar os 5 levantarem\n", i)
 		s.c.Wait()
 	}
 	s.n--
+	if s.n == 0 {
+		s.must_wait = true
+	}
 	fmt.Printf("Cliente %d sentou | %d clientes sentados\n", i, 5-s.n)
 	s.c.L.Unlock()
 }
@@ -49,9 +49,9 @@ func (s *Semaphore) V(i int) {
 	if s.n == 5 {
 		fmt.Println("MESA VAZIA!")
 		s.must_wait = false
+		s.c.Broadcast()
 	}
 	s.c.L.Unlock()
-	s.c.Signal()
 }
 
 /*
