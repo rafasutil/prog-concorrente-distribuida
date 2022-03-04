@@ -32,7 +32,7 @@ func (p *Ponte) Entrar(e Carro) {
 	}
 
 	p.buffer = append(p.buffer, e)
-	fmt.Println(e.Nome, " entrou na ponte!")
+	fmt.Println(e.Nome, " entrou na ponte!", len(p.buffer), "carros na ponte!")
 
 	p.cond.Broadcast()
 	p.cond.L.Unlock()
@@ -46,7 +46,7 @@ func (p *Ponte) Sair() {
 
 	e := p.buffer[0]
 	p.buffer = p.buffer[1:]
-	fmt.Println(e.Nome, " saiu da ponte!")
+	fmt.Println(e.Nome, " saiu da ponte!", len(p.buffer), "carros na ponte!")
 
 	p.cond.Broadcast()
 	p.cond.L.Unlock()
