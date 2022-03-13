@@ -8,8 +8,20 @@ import (
 	"strconv"
 )
 
+var dates []string
+
 func main() {
-	HelloClientTCP(10)
+	dates = []string{
+		"12/03/2022",
+		"13/03/2022",
+		"14/03/2022",
+		"15/03/2022",
+		"16/03/2022",
+		"17/03/2022",
+		"18/03/2022",
+	}
+
+	HelloClientTCP(len(dates))
 	//HelloClientUDP(10)
 }
 
@@ -41,7 +53,7 @@ func HelloClientTCP(n int) {
 	for i := 0; i < n; i++ {
 
 		// cria request
-		req := "Mensagem " + strconv.Itoa(i)
+		req := dates[i]
 
 		// envia mensage para o servidor
 		_, err := fmt.Fprintf(conn, req+"\n")
@@ -56,8 +68,8 @@ func HelloClientTCP(n int) {
 			fmt.Println(err)
 			os.Exit(0)
 		}
-
-		fmt.Print(req, " ", rep)
+		fmt.Println("Getting info about the date: " + req)
+		fmt.Println(rep)
 	}
 }
 
