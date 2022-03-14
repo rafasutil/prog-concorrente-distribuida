@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strconv"
+	// "strconv"
 )
 
 var dates []string
@@ -22,7 +22,7 @@ func main() {
 	}
 
 	HelloClientTCP(len(dates))
-	//HelloClientUDP(10)
+	// HelloClientUDP(len(dates))
 }
 
 func HelloClientTCP(n int) {
@@ -69,12 +69,12 @@ func HelloClientTCP(n int) {
 			os.Exit(0)
 		}
 		fmt.Println("Getting info about the date: " + req)
-		fmt.Println(rep)
+		fmt.Print(rep)
 	}
 }
 
 func HelloClientUDP(n int) {
-	req := make([]byte, 1024)
+	req := make([]byte, 10)
 	rep := make([]byte, 1024)
 
 	// retorna o endereço do endpoint UDP
@@ -102,7 +102,8 @@ func HelloClientUDP(n int) {
 
 	for i := 0; i < n; i++ {
 		// cria request
-		req = []byte("Mensagem " + strconv.Itoa(i))
+		// req = []byte("Mensagem " + strconv.Itoa(i))
+		req = []byte(dates[i])
 
 		// envia request ao servidor
 		_, err = conn.Write(req)
@@ -118,6 +119,7 @@ func HelloClientUDP(n int) {
 			os.Exit(0)
 		}
 
-		fmt.Println(string(req), " -> ", string(rep))
+		fmt.Println("Getting info about the date: " + string(req))
+		fmt.Println(string(rep))
 	}
 }

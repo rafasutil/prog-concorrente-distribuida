@@ -30,8 +30,7 @@ func main() {
 	}
 
 	HelloServerTCP()
-
-	//HelloServerUDP()
+	// HelloServerUDP()
 
 	_, _ = fmt.Scanln()
 }
@@ -81,7 +80,7 @@ func HelloServerTCP() {
 		// processa request
 		req = strings.ReplaceAll(req, "\n", "")
 		idx := indexOf(req, datesWeather)
-		rep:= formatDateInfoText(datesWeather[idx])
+		rep:= formatDateInfoText(idx)
 
 		// envia resposta
 		fmt.Println("Returning to client info about the date: " + req)
@@ -94,7 +93,7 @@ func HelloServerTCP() {
 }
 
 func HelloServerUDP() {
-	req := make([]byte, 1024)
+	req := make([]byte, 10)
 	rep := make([]byte, 1024)
 
 	// define o endpoint do servidor UDP
@@ -131,9 +130,14 @@ func HelloServerUDP() {
 		}
 
 		// processa request
-		rep = []byte(strings.ToUpper(string(req)))
+		// rep = []byte(strings.ToUpper(string(req)))
+		stringReq := string(req)
+		stringReq = strings.ReplaceAll(stringReq, "\n", "")
+		idx := indexOf(stringReq, datesWeather)
+		rep = []byte(formatDateInfoText(idx))
 
 		// envia reposta
+		fmt.Println("Returning to client info about the date: " + string(req))
 		_, err = conn.WriteTo(rep, addr)
 		if err != nil {
 			fmt.Println(err)
@@ -144,14 +148,19 @@ func HelloServerUDP() {
 
 func indexOf(element string, data []DateWeather) (int) {
 	for k, v := range data {
-			if element == v.date {
-					return k
-			}
+		if element == v.date {
+			return k
+		}
 	}
-	return -1    //not found.
+	return -1 //not found.
 }
 
-func formatDateInfoText(dateWeather DateWeather ) (string) {
+func formatDateInfoText(dateIndex int ) (string) {
+	if(dateIndex == -1){
+		return "No info about this date"
+	}
+
+	dateWeather := datesWeather[dateIndex]
 	rep:= "In " + dateWeather.date +
 	" the minimum temperature will be " +
 	strconv.Itoa(dateWeather.mininumTemperature) +
