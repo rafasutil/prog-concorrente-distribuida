@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
-	// "strconv"
+	"time"
 )
 
 var dates []string
@@ -19,10 +19,18 @@ func main() {
 		"16/03/2022",
 		"17/03/2022",
 		"18/03/2022",
+		"19/03/2022",
+		"20/03/2022",
+		"21/03/2022",
 	}
+	time1 := time.Now()
 
 	HelloClientTCP(len(dates))
 	// HelloClientUDP(len(dates))
+	
+	time2 := time.Now()
+	elapsedTime := float64(time2.Sub(time1).Milliseconds())
+	fmt.Println(elapsedTime)
 }
 
 func HelloClientTCP(n int) {
@@ -51,9 +59,10 @@ func HelloClientTCP(n int) {
 	}(conn)
 
 	for i := 0; i < n; i++ {
-
+		for j:= 0; j < 1000; j++ {
 		// cria request
 		req := dates[i]
+
 
 		// envia mensage para o servidor
 		_, err := fmt.Fprintf(conn, req+"\n")
@@ -70,6 +79,7 @@ func HelloClientTCP(n int) {
 		}
 		fmt.Println("Getting info about the date: " + req)
 		fmt.Print(rep)
+		}
 	}
 }
 
@@ -101,6 +111,7 @@ func HelloClientUDP(n int) {
 	}(conn)
 
 	for i := 0; i < n; i++ {
+		for j:= 0; j < 1000; j++ {
 		// cria request
 		// req = []byte("Mensagem " + strconv.Itoa(i))
 		req = []byte(dates[i])
@@ -121,5 +132,6 @@ func HelloClientUDP(n int) {
 
 		fmt.Println("Getting info about the date: " + string(req))
 		fmt.Println(string(rep))
+		}
 	}
 }
