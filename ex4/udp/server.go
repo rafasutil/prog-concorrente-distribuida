@@ -71,7 +71,6 @@ func HandleServerUDP() {
 		}
 
 		// processa request
-		// rep = []byte(strings.ToUpper(string(req)))
 		stringReq := string(req)
 		stringReq = strings.ReplaceAll(stringReq, "\n", "")
 		idx := indexOf(stringReq, datesWeather)
