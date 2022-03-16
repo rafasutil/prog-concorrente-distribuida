@@ -30,7 +30,7 @@ func main() {
 	
 		for i := 0; i < 10; i++{
 			wg.Add(1)
-			go HelloClientUDP(len(dates), addr, &wg)
+			go HandleClientUDP(len(dates), addr, &wg)
 		}
 	
 		wg.Wait()
@@ -38,7 +38,7 @@ func main() {
 }
 
 
-func HelloClientUDP(n int, addr *net.UDPAddr, wg *sync.WaitGroup) {
+func HandleClientUDP(n int, addr *net.UDPAddr, wg *sync.WaitGroup) {
 	time1 := time.Now()
 	req := make([]byte, 10)
 	rep := make([]byte, 1024)
