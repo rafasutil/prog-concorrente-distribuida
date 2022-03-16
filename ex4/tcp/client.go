@@ -31,7 +31,6 @@ func main() {
 	r, err := net.ResolveTCPAddr("tcp", "localhost:1313")
 	checkError(err)
 
-	// file, err := os.Create("results.csv")
 	for i := 0; i < 10; i++{
 		wg.Add(1)
 		// connecta ao servidor (sem definir uma porta local)
@@ -52,10 +51,9 @@ func HandleClientTCP(n int, conn net.Conn, wg *sync.WaitGroup) {
 	defer conn.Close()
 	defer wg.Done()
 
-	for i := 0; i < n; i++ {
-		for j:= 0; j < 1000; j++ {
+	for i:= 0; i < 10000; i++ {
 		// cria request
-		req := dates[i]
+		req := dates[i%n]
 
 
 		// envia mensage para o servidor
@@ -67,7 +65,6 @@ func HandleClientTCP(n int, conn net.Conn, wg *sync.WaitGroup) {
 		checkError(err)
 		fmt.Println("Getting info about the date: " + req)
 		fmt.Print(rep)
-		}
 	}
 	time2 := time.Now()
 	elapsedTime := float64(time2.Sub(time1).Milliseconds())

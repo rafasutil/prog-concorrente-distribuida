@@ -49,9 +49,8 @@ func HandleClientUDP(n int, addr *net.UDPAddr, wg *sync.WaitGroup) {
 	defer conn.Close()
 	defer wg.Done()
 
-	for i := 0; i < n; i++ {
-		for j:= 0; j < 1000; j++ {
-		req = []byte(dates[i])
+	for i := 0; i < 10000; i++ {
+		req = []byte(dates[i%n])
 
 		_, err := conn.Write(req)
 		if err != nil {
@@ -65,7 +64,6 @@ func HandleClientUDP(n int, addr *net.UDPAddr, wg *sync.WaitGroup) {
 		fmt.Println("Getting info about the date: " + string(req))
 		fmt.Println(string(rep))
 	}
-}
 	time2 := time.Now()
 	elapsedTime := float64(time2.Sub(time1).Milliseconds())
 	f, err := os.OpenFile("results.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
