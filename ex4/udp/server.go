@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strconv"
 	"strings"
+	"strconv"
 )
 
 type DateWeather struct {
-	date               string // DD/MM/YYYY
+	date string // DD/MM/YYYY
 	mininumTemperature int
 	maximumTemperature int
-	mayRain            bool
+	mayRain bool
 }
 
 var datesWeather []DateWeather
@@ -26,9 +26,6 @@ func main() {
 		{"16/03/2022", 18, 27, true},
 		{"17/03/2022", 25, 33, false},
 		{"18/03/2022", 23, 31, true},
-		{"19/03/2022", 21, 34, false},
-		{"20/03/2022", 22, 32, true},
-		{"21/03/2022", 24, 30, true},
 	}
 
 	HandleServerUDP()
@@ -40,55 +37,75 @@ func HandleServerUDP() {
 	req := make([]byte, 10)
 	rep := make([]byte, 1024)
 
+	// define o endpoint do servidor UDP
 	addr, err := net.ResolveUDPAddr("udp", "localhost:1313")
-	checkError(err)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(0)
+	}
 
+	// prepara o endpoint UDP para receber requests
 	conn, err := net.ListenUDP("udp", addr)
-	checkError(err)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(0)
+	}
 
+	// fecha conn
 	defer func(conn *net.UDPConn) {
 		err := conn.Close()
-		checkError(err)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(0)
+		}
 	}(conn)
 
 	fmt.Println("Servidor UDP aguardando requests...")
 
 	for {
+		// recebe request
 		_, addr, err := conn.ReadFromUDP(req)
-		checkError(err)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(0)
+		}
 
+		// processa request
 		stringReq := string(req)
 		stringReq = strings.ReplaceAll(stringReq, "\n", "")
 		idx := indexOf(stringReq, datesWeather)
 		rep = []byte(formatDateInfoText(idx))
 
+		// envia reposta
 		fmt.Println("Returning to client info about the date: " + string(req))
 		_, err = conn.WriteTo(rep, addr)
-
-		checkError(err)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(0)
+		}
 	}
 }
 
-func indexOf(element string, data []DateWeather) int {
+func indexOf(element string, data []DateWeather) (int) {
 	for k, v := range data {
 		if element == v.date {
 			return k
 		}
 	}
-	return -1
+	return -1 //not found.
 }
 
-func formatDateInfoText(dateIndex int) string {
-	if dateIndex == -1 {
+func formatDateInfoText(dateIndex int ) (string) {
+	if(dateIndex == -1){
 		return "No info about this date"
 	}
 
 	dateWeather := datesWeather[dateIndex]
-	rep := "In " + dateWeather.date +
-		" the minimum temperature will be " +
-		strconv.Itoa(dateWeather.mininumTemperature) +
-		", the maximum temperature will be " +
-		strconv.Itoa(dateWeather.maximumTemperature)
+	rep:= "In " + dateWeather.date +
+	" the minimum temperature will be " +
+	strconv.Itoa(dateWeather.mininumTemperature) +
+	", the maximum temperature will be " +
+	strconv.Itoa(dateWeather.maximumTemperature)
 
 	if dateWeather.mayRain {
 		rep += " and it will probably rain."
@@ -97,11 +114,4 @@ func formatDateInfoText(dateIndex int) string {
 	}
 
 	return rep
-}
-
-func checkError(err error) {
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Fatal error: %s\n", err.Error())
-		os.Exit(0)
-	}
 }
