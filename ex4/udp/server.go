@@ -27,13 +27,10 @@ func main() {
 		{"16/03/2022", 18, 27, true},
 		{"17/03/2022", 25, 33, false},
 		{"18/03/2022", 23, 31, true},
-		{"19/03/2022", 21, 34, false},
-		{"20/03/2022", 22, 32, true},
-		{"21/03/2022", 24, 30, true},
 	}
 
-	HelloServerTCP()
-	// HelloServerUDP()
+	// HelloServerTCP()
+	HelloServerUDP()
 
 	_, _ = fmt.Scanln()
 }

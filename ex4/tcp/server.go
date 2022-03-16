@@ -32,52 +32,37 @@ func main() {
 		{"21/03/2022", 24, 30, true},
 	}
 
-	HelloServerTCP()
-	// HelloServerUDP()
+	// define o endpoint do servidor TCP
+	r, err := net.ResolveTCPAddr("tcp", "localhost:1313")
+	checkError(err)
+
+	// cria um listener TCP
+	ln, err := net.ListenTCP("tcp", r)
+	checkError(err)
+	
+	for {
+		// aguarda/aceita conexão
+		conn, err := ln.Accept()
+		if err != nil {
+			continue
+		}
+		go 	HandleTCP(conn)
+	}
 
 	_, _ = fmt.Scanln()
 }
 
-func HelloServerTCP() {
-	// define o endpoint do servidor TCP
-	r, err := net.ResolveTCPAddr("tcp", "localhost:1313")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(0)
-	}
-
-	// cria um listener TCP
-	ln, err := net.ListenTCP("tcp", r)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(0)
-	}
-
+func HandleTCP(conn net.Conn) {
 	fmt.Println("Servidor TCP aguardando conexão...")
-
-	// aguarda/aceita conexão
-	conn, err := ln.Accept()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(0)
-	}
-
-	// fecha conexão
-	defer func(conn net.Conn) {
-		err := conn.Close()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(0)
-		}
-	}(conn)
+	defer conn.Close()
 
 	// recebe e processa requests
 	for {
 		// recebe request terminado com '\n'
 		req, err := bufio.NewReader(conn).ReadString('\n')
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(0)
+		if err != nil && err.Error() == "EOF" {
+			conn.Close()
+			break
 		}
 
 		// processa request
@@ -88,64 +73,7 @@ func HelloServerTCP() {
 		// envia resposta
 		fmt.Println("Returning to client info about the date: " + req)
 		_, err = conn.Write([]byte(rep + "\n"))
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(0)
-		}
-	}
-}
-
-func HelloServerUDP() {
-	req := make([]byte, 10)
-	rep := make([]byte, 1024)
-
-	// define o endpoint do servidor UDP
-	addr, err := net.ResolveUDPAddr("udp", "localhost:1313")
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(0)
-	}
-
-	// prepara o endpoint UDP para receber requests
-	conn, err := net.ListenUDP("udp", addr)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(0)
-	}
-
-	// fecha conn
-	defer func(conn *net.UDPConn) {
-		err := conn.Close()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(0)
-		}
-	}(conn)
-
-	fmt.Println("Servidor UDP aguardando requests...")
-
-	for {
-		// recebe request
-		_, addr, err := conn.ReadFromUDP(req)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(0)
-		}
-
-		// processa request
-		// rep = []byte(strings.ToUpper(string(req)))
-		stringReq := string(req)
-		stringReq = strings.ReplaceAll(stringReq, "\n", "")
-		idx := indexOf(stringReq, datesWeather)
-		rep = []byte(formatDateInfoText(idx))
-
-		// envia reposta
-		fmt.Println("Returning to client info about the date: " + string(req))
-		_, err = conn.WriteTo(rep, addr)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(0)
-		}
+		checkError(err)
 	}
 }
 
@@ -155,7 +83,7 @@ func indexOf(element string, data []DateWeather) (int) {
 			return k
 		}
 	}
-	return -1 //not found.
+	return -1
 }
 
 func formatDateInfoText(dateIndex int ) (string) {
@@ -177,4 +105,11 @@ func formatDateInfoText(dateIndex int ) (string) {
 	}
 
 	return rep
+}
+
+func checkError(err error) {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Fatal error: %s\n", err.Error())
+		os.Exit(0)
+	}
 }
