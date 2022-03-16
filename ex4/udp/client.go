@@ -58,7 +58,7 @@ func HandleClientUDP(n int, addr *net.UDPAddr, wg *sync.WaitGroup, clientIndex i
 		req = []byte(dates[i%n])
 
 		_, err := conn.Write(req)
-		checkError(errr)
+		checkError(err)
 
 		_, _, err = conn.ReadFromUDP(rep)
 		checkError(err)
@@ -71,7 +71,7 @@ func HandleClientUDP(n int, addr *net.UDPAddr, wg *sync.WaitGroup, clientIndex i
 		
 		// just print in file is is the first client
 		if(clientIndex == 0){
-			f.WriteString(fmt.Sprintf("%f", elapsedTime) + "\n")
+			file.WriteString(fmt.Sprintf("%f", elapsedTime) + "\n")
 		}
 	}
 
