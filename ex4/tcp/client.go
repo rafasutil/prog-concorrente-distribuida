@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"time"
 	"sync"
-	"strconv"
+	"time"
+	// "strconv"
 )
 
 var dates []string
@@ -27,55 +27,59 @@ func main() {
 	}
 	var wg sync.WaitGroup
 
-	// retorna o endereço do endpoint TCP
 	r, err := net.ResolveTCPAddr("tcp", "localhost:1313")
 	checkError(err)
 
-	for i := 0; i < 10; i++{
+	// open the file named results.csv, and all new writes will be appended
+	file, err := os.OpenFile("results.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	checkError(err)
+
+	for i := 0; i < 10; i++ {
 		wg.Add(1)
-		// connecta ao servidor (sem definir uma porta local)
 		conn, err := net.DialTCP("tcp", nil, r)
 		checkError(err)
 		if err != nil {
 			continue
 		}
-		go HandleClientTCP(len(dates), conn, &wg)
+		go HandleClientTCP(len(dates), conn, &wg, i, file)
 	}
 
 	wg.Wait()
 }
 
-func HandleClientTCP(n int, conn net.Conn, wg *sync.WaitGroup) {
-	time1 := time.Now()
+func HandleClientTCP(n int, conn net.Conn, wg *sync.WaitGroup, clientIndex int, file *os.File) {
 
 	defer conn.Close()
 	defer wg.Done()
 
-	for i:= 0; i < 10000; i++ {
-		// cria request
+	for i := 0; i < 10000; i++ {
+		time1 := time.Now()
+
 		req := dates[i%n]
 
-
-		// envia mensage para o servidor
 		_, err := fmt.Fprintf(conn, req+"\n")
 		checkError(err)
 
-		// recebe resposta do servidor
 		rep, err := bufio.NewReader(conn).ReadString('\n')
 		checkError(err)
+
 		fmt.Println("Getting info about the date: " + req)
 		fmt.Print(rep)
+
+		time2 := time.Now()
+		elapsedTime := float64(time2.Sub(time1).Nanoseconds()) / 1000000 // time in ms
+
+		// just print in file is is the first client
+		if clientIndex == 0 {
+			file.WriteString(fmt.Sprintf("%f", elapsedTime) + "\n")
+		}
 	}
-	time2 := time.Now()
-	elapsedTime := float64(time2.Sub(time1).Milliseconds())
-	f, err := os.OpenFile("results.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	checkError(err)
-	f.WriteString(strconv.Itoa(int(elapsedTime)) + "\n")
+
 }
 
 func checkError(err error) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Fatal error: %s\n", err.Error())
-		os.Exit(1)
+		os.Exit(0)
 	}
 }

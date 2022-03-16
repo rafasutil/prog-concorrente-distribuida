@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 type DateWeather struct {
-	date string // DD/MM/YYYY
+	date               string // DD/MM/YYYY
 	mininumTemperature int
 	maximumTemperature int
-	mayRain bool
+	mayRain            bool
 }
 
 var datesWeather []DateWeather
@@ -32,21 +32,18 @@ func main() {
 		{"21/03/2022", 24, 30, true},
 	}
 
-	// define o endpoint do servidor TCP
 	r, err := net.ResolveTCPAddr("tcp", "localhost:1313")
 	checkError(err)
 
-	// cria um listener TCP
 	ln, err := net.ListenTCP("tcp", r)
 	checkError(err)
-	
+
 	for {
-		// aguarda/aceita conexão
 		conn, err := ln.Accept()
 		if err != nil {
 			continue
 		}
-		go 	HandleTCP(conn)
+		go HandleTCP(conn)
 	}
 
 	_, _ = fmt.Scanln()
@@ -56,28 +53,25 @@ func HandleTCP(conn net.Conn) {
 	fmt.Println("Servidor TCP aguardando conexão...")
 	defer conn.Close()
 
-	// recebe e processa requests
 	for {
-		// recebe request terminado com '\n'
+		// receive request that ends with '\n'
 		req, err := bufio.NewReader(conn).ReadString('\n')
 		if err != nil && err.Error() == "EOF" {
 			conn.Close()
 			break
 		}
 
-		// processa request
 		req = strings.ReplaceAll(req, "\n", "")
 		idx := indexOf(req, datesWeather)
-		rep:= formatDateInfoText(idx)
+		rep := formatDateInfoText(idx)
 
-		// envia resposta
 		fmt.Println("Returning to client info about the date: " + req)
 		_, err = conn.Write([]byte(rep + "\n"))
 		checkError(err)
 	}
 }
 
-func indexOf(element string, data []DateWeather) (int) {
+func indexOf(element string, data []DateWeather) int {
 	for k, v := range data {
 		if element == v.date {
 			return k
@@ -86,17 +80,17 @@ func indexOf(element string, data []DateWeather) (int) {
 	return -1
 }
 
-func formatDateInfoText(dateIndex int ) (string) {
-	if(dateIndex == -1){
+func formatDateInfoText(dateIndex int) string {
+	if dateIndex == -1 {
 		return "No info about this date"
 	}
 
 	dateWeather := datesWeather[dateIndex]
-	rep:= "In " + dateWeather.date +
-	" the minimum temperature will be " +
-	strconv.Itoa(dateWeather.mininumTemperature) +
-	", the maximum temperature will be " +
-	strconv.Itoa(dateWeather.maximumTemperature)
+	rep := "In " + dateWeather.date +
+		" the minimum temperature will be " +
+		strconv.Itoa(dateWeather.mininumTemperature) +
+		", the maximum temperature will be " +
+		strconv.Itoa(dateWeather.maximumTemperature)
 
 	if dateWeather.mayRain {
 		rep += " and it will probably rain."
