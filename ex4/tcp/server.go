@@ -48,8 +48,6 @@ func main() {
 		}
 		go HandleTCP(conn)
 	}
-
-	_, _ = fmt.Scanln()
 }
 
 func HandleTCP(conn net.Conn) {
