@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package = "ex6/fileservice";
+
+package fileservice;
+
+service FileService {
+  rpc Compress(FileRequest) returns (FileResponse) {}
+}
+
+message FileRequest {
+  bytes file = 1;
+}
+
+message FileResponse {
+  bytes file = 1;
+}
