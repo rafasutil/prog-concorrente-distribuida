@@ -63,22 +63,22 @@ func publish(ch *amqp.Channel, queue amqp.Queue, output []byte) {
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        (output),
-			// ContentEncoding: "gzip",
+			ContentEncoding: "gzip",
 		})
 }
 
 func handleClient(ch *amqp.Channel, requestCh <-chan amqp.Delivery, fileQ amqp.Queue) {
 	file := (<-requestCh).Body
 
-	// Get file size
-	publish(ch, fileQ, []byte(string(strconv.FormatInt(int64(len(file)), 10))))
-	fmt.Println("Sending -> ", "Size: ", string(strconv.FormatInt(int64(len(file)), 10)))
-
 	var b bytes.Buffer
 	gz := gzip.NewWriter(&b)
 	gz.Write(file);
 	gz.Close();
-	fmt.Println(len(b.Bytes()))
+
+	// Get file size
+	publish(ch, fileQ, []byte(string(strconv.FormatInt(int64(len(b.Bytes())), 10))))
+	fmt.Println("Before: ", string(strconv.FormatInt(int64(len(file)), 10)),". After: ", string(strconv.FormatInt(int64(len(b.Bytes())), 10)))
+	
 	publish(ch, fileQ, b.Bytes())
 	// we're finished with this client
 }

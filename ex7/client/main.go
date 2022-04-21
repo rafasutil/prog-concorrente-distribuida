@@ -6,14 +6,29 @@ import (
 	"strconv"
 	"github.com/streadway/amqp"
 	"io/ioutil"
+	"time"
+	"math"
 )
 
 const BUFFERSIZE = 1024
 const fileName = "file.txt"
-const REQUESTS = 1
+const REQUESTS = 100
+const CLIENTS = 1
+var responses = 0
+var responsesTime [REQUESTS]time.Duration
 
 func main() {
+	for i := 0; i < CLIENTS; i++ {
+		go client(i)
+	}
+
+	calculate()
+}
+
+func client(id int){
 	for i := 0; i < REQUESTS; i++ {
+		fmt.Println("Client", id, "requesting file", i)
+		t1 := time.Now()
 		conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 		checkError(err)
 		ch, err := conn.Channel()
@@ -40,17 +55,20 @@ func main() {
 		checkError(err)
 
 		input, _ := ioutil.ReadFile(fileName)
-		requestFile(input, ch, fileQueue, requestQueue)
+		requestFile(input, ch, fileQueue, requestQueue, i)
+
+		if id == 0 {
+			responsesTime[i] = time.Since(t1)
+			responses++
+		}
 
 		ch.Close()
 		conn.Close()
 	}
-
-	os.Exit(0)
 }
 
-func requestFile(input []byte, ch *amqp.Channel, fileQ amqp.Queue, requestQ amqp.Queue) {
-	// Getting File Size
+func requestFile(input []byte, ch *amqp.Channel, fileQ amqp.Queue, requestQ amqp.Queue, i int) {
+	// Getting compressed file size
 	fileCh, err := ch.Consume(
 		fileQ.Name, // queue
 		"",         // consumer
@@ -71,33 +89,45 @@ func requestFile(input []byte, ch *amqp.Channel, fileQ amqp.Queue, requestQ amqp
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        input,
+			ContentEncoding: "gzip",
 		})
 	checkError(err)
 
-	fileSize, _ := (strconv.ParseInt(string((<-fileCh).Body), 10, 64))
-	file, err := os.Create(fileName + ".gz")
-	checkError(err)
-	defer file.Close()
-
-	var recSize int64
-	recSize = 0
-	for {
-		if (fileSize - recSize) < BUFFERSIZE {
-			file.Write((<-fileCh).Body[:(fileSize - recSize)])
-			recSize = fileSize
-			break
-		}
-		file.Write((<-fileCh).Body)
-		recSize += BUFFERSIZE
-		if recSize == fileSize {
-			break
-		}
-	}
+	_, _ = (strconv.ParseInt(string((<-fileCh).Body), 10, 64))
+	// file, err := os.Create(strconv.Itoa(i) + ".gz")
+	// checkError(err)
+	// defer file.Close()
+	// file.Write((<-fileCh).Body)
 }
 
 func checkError(err error) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
 		os.Exit(1)
+	}
+}
+
+func calculate(){
+	for {
+		time.Sleep(1 * time.Second)
+		if responses >= REQUESTS {
+			sum := float64(0)
+			for _, element := range responsesTime {
+				t := element / time.Millisecond
+				sum += float64(t)
+			}
+
+			average := sum / float64(REQUESTS)
+
+			sum = float64(0)
+			for _, element := range responsesTime {
+				t := element / time.Millisecond
+				sum += ((float64(t) - average) * (float64(t) - average))
+			}
+
+			deviation := math.Sqrt(float64(sum) / float64(time.Duration(REQUESTS-1)))
+			fmt.Print(average, deviation)
+			break
+		}
 	}
 }
