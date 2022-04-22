@@ -69,18 +69,19 @@ func publish(ch *amqp.Channel, queue amqp.Queue, output []byte) {
 
 func handleClient(ch *amqp.Channel, requestCh <-chan amqp.Delivery, fileQ amqp.Queue) {
 	file := (<-requestCh).Body
-
+	fileSize := string(strconv.FormatInt(int64(len(file)), 10))
 	var b bytes.Buffer
 	gz := gzip.NewWriter(&b)
 	gz.Write(file);
 	gz.Close();
+	compressedFileSize := string(strconv.FormatInt(int64(len(b.Bytes())), 10))
 
-	// Get file size
-	publish(ch, fileQ, []byte(string(strconv.FormatInt(int64(len(b.Bytes())), 10))))
-	fmt.Println("Before: ", string(strconv.FormatInt(int64(len(file)), 10)),". After: ", string(strconv.FormatInt(int64(len(b.Bytes())), 10)))
+	// Send compressed file size to client
+	publish(ch, fileQ, []byte(compressedFileSize))
+	fmt.Println("Before: ", fileSize,". After: ", compressedFileSize)
 	
+	// Send compressed file to client
 	publish(ch, fileQ, b.Bytes())
-	// we're finished with this client
 }
 
 func checkError(err error) {

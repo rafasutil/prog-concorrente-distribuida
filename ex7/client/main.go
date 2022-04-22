@@ -12,7 +12,7 @@ import (
 
 const BUFFERSIZE = 1024
 const fileName = "file.txt"
-const REQUESTS = 100
+const REQUESTS = 10
 const CLIENTS = 1
 var responses = 0
 var responsesTime [REQUESTS]time.Duration
@@ -68,20 +68,8 @@ func client(id int){
 }
 
 func requestFile(input []byte, ch *amqp.Channel, fileQ amqp.Queue, requestQ amqp.Queue, i int) {
-	// Getting compressed file size
-	fileCh, err := ch.Consume(
-		fileQ.Name, // queue
-		"",         // consumer
-		true,       // auto-ack
-		false,      // exclusive
-		false,      // no-local
-		false,      // no-wait
-		nil,        // args
-	)
-	checkError(err)
-
 	// Sending File
-	err = ch.Publish(
+	err := ch.Publish(
 		"",            // exchange
 		requestQ.Name, // routing key
 		false,         // mandatory
@@ -93,11 +81,26 @@ func requestFile(input []byte, ch *amqp.Channel, fileQ amqp.Queue, requestQ amqp
 		})
 	checkError(err)
 
-	_, _ = (strconv.ParseInt(string((<-fileCh).Body), 10, 64))
-	// file, err := os.Create(strconv.Itoa(i) + ".gz")
-	// checkError(err)
-	// defer file.Close()
-	// file.Write((<-fileCh).Body)
+	// Getting compressed file size and content
+	fileCh, err := ch.Consume(
+		fileQ.Name, // queue
+		"",         // consumer
+		true,       // auto-ack
+		false,      // exclusive
+		false,      // no-local
+		false,      // no-wait
+		nil,        // args
+	)
+	checkError(err)
+
+	fileSize, _ := (strconv.ParseInt(string((<-fileCh).Body), 10, 64))
+	fmt.Println("Compressed file size:", fileSize)
+
+	fileContent := (<-fileCh).Body
+	file, err := os.Create(strconv.Itoa(i) + ".gz")
+	checkError(err)
+	defer file.Close()
+	file.Write(fileContent)
 }
 
 func checkError(err error) {
