@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"github.com/streadway/amqp"
 	"compress/gzip"
 	"bytes"
@@ -11,7 +10,6 @@ import (
 
 const BUFFERSIZE = 1024
 
-// Main Server
 func main() {
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	checkError(err)
@@ -69,15 +67,14 @@ func publish(ch *amqp.Channel, queue amqp.Queue, output []byte) {
 
 func handleClient(ch *amqp.Channel, requestCh <-chan amqp.Delivery, fileQ amqp.Queue) {
 	file := (<-requestCh).Body
-	fileSize := string(strconv.FormatInt(int64(len(file)), 10))
 	var b bytes.Buffer
 	gz := gzip.NewWriter(&b)
 	gz.Write(file);
 	gz.Close();
-	compressedFileSize := string(strconv.FormatInt(int64(len(b.Bytes())), 10))
 
-	// Send compressed file size to client
-	publish(ch, fileQ, []byte(compressedFileSize))
+	fileSize := len(file)
+	compressedFileSize := len(b.Bytes())
+
 	fmt.Println("Before: ", fileSize,". After: ", compressedFileSize)
 	
 	// Send compressed file to client

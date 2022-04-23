@@ -81,7 +81,7 @@ func requestFile(input []byte, ch *amqp.Channel, fileQ amqp.Queue, requestQ amqp
 		})
 	checkError(err)
 
-	// Getting compressed file size and content
+	// Getting compressed file
 	fileCh, err := ch.Consume(
 		fileQ.Name, // queue
 		"",         // consumer
@@ -93,8 +93,6 @@ func requestFile(input []byte, ch *amqp.Channel, fileQ amqp.Queue, requestQ amqp
 	)
 	checkError(err)
 
-	fileSize, _ := (strconv.ParseInt(string((<-fileCh).Body), 10, 64))
-	fmt.Println("Compressed file size:", fileSize)
 
 	fileContent := (<-fileCh).Body
 	file, err := os.Create(strconv.Itoa(i) + ".gz")
